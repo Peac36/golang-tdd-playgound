@@ -56,10 +56,15 @@ func GetEvent(connection *gorm.DB) http.Handler {
 			return
 		}
 
-		regex := regexp.MustCompile(`\/event\/(\d+)\/?`)
+		regex := regexp.MustCompile(`\/event\/(\d+)\/?$`)
 		regexResult := regex.FindAllStringSubmatch(r.URL.Path, 1)
 		eventIdString := regexResult[0][1]
-		eventId, _ := strconv.Atoi(eventIdString)
+		eventId, err := strconv.Atoi(eventIdString)
+
+		if err != nil || eventId == 0 {
+			responses.NewJsonResponse(rw, http.StatusNotFound, nil)
+			return
+		}
 
 		event := models.Event{}
 		result := connection.Find(&event, eventId)

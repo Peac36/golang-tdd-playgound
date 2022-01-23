@@ -5,10 +5,16 @@ import (
 	"net/http"
 	"site/database"
 	"site/routes"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	server := http.NewServeMux()
+	router := mux.NewRouter()
+	server := &http.Server{
+		Handler: router,
+		Addr:    "127.0.0.1:8000",
+	}
 
 	connection, err := database.NewDatabaseConnection()
 	if err != nil {
@@ -18,9 +24,9 @@ func main() {
 		log.Fatalf("Error running migrations %s \n", err)
 	}
 
-	routes.NewRouteRegister(server)
+	routes.NewRouteRegister(router)
 
-	if err := http.ListenAndServe(":8080", server); err != nil {
+	if err := server.ListenAndServe(); err != nil {
 		log.Fatalln(err)
 	}
 }

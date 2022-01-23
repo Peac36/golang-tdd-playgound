@@ -1,15 +1,16 @@
 package routes
 
 import (
-	"net/http"
 	"site/database"
 	"site/http/handlers"
 	"site/http/handlers/auth"
 	"site/http/middlewares"
 	"site/security"
+
+	"github.com/gorilla/mux"
 )
 
-func NewRouteRegister(server *http.ServeMux) {
+func NewRouteRegister(server *mux.Router) {
 	connection, _ := database.NewDatabaseConnection()
 	tokenService := security.NewTokenService()
 
@@ -19,6 +20,6 @@ func NewRouteRegister(server *http.ServeMux) {
 	server.Handle("/login", auth.Login(connection, tokenService))
 
 	server.Handle("/event", authMiddleware(handlers.EventCreate(connection)))
-	server.Handle("/event/*", authMiddleware(handlers.GetEvent(connection)))
+	server.Handle("/event/{event}", authMiddleware(handlers.GetEvent(connection)))
 	server.Handle("/events", authMiddleware(handlers.GetEvents(connection, tokenService)))
 }
