@@ -7,6 +7,7 @@ require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
