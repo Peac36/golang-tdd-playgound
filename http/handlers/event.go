@@ -14,31 +14,40 @@ import (
 	"gorm.io/gorm"
 )
 
-type CreateEventRequest struct {
-	Name string
-}
-
-func EventCreate(connection *gorm.DB) http.Handler {
+func EventCreate(connection *gorm.DB, tokenService security.TokenSecurity) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			responses.NewJsonResponse(rw, http.StatusMethodNotAllowed, nil)
 			return
 		}
 
-		parsedEvent := CreateEventRequest{}
-		if err := json.NewDecoder(r.Body).Decode(&parsedEvent); err != nil {
+		event := models.Event{}
+		if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
 			responses.NewJsonResponse(rw, http.StatusUnprocessableEntity, nil)
 			return
 		}
 
-		user := models.User{}
-		connection.First(&user)
-		event := models.Event{Name: parsedEvent.Name, UserID: user.ID}
 		errors := validation.Validate(event)
 		if len(errors) != 0 {
 			responses.NewJsonResponse(rw, http.StatusUnprocessableEntity, errors)
 			return
 		}
+
+		authHeader := r.Header.Get(middlewares.AuthorizationHeader)
+		if authHeader == "" {
+			responses.NewJsonResponse(rw, http.StatusUnauthorized, nil)
+			return
+		}
+
+		userId, err := tokenService.GetIdentifier(authHeader)
+		if err != nil {
+			responses.NewJsonResponse(rw, http.StatusUnauthorized, nil)
+			return
+		}
+
+		user := models.User{}
+		connection.Find(&user, userId)
+		event.UserID = user.ID
 
 		result := connection.Save(&event)
 		if result.Error != nil {

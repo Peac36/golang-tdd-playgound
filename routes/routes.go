@@ -19,7 +19,7 @@ func NewRouteRegister(server *mux.Router) {
 	server.Handle("/register", auth.Register(connection))
 	server.Handle("/login", auth.Login(connection, tokenService))
 
-	server.Handle("/event", authMiddleware(handlers.EventCreate(connection)))
+	server.Handle("/event", authMiddleware(handlers.EventCreate(connection, tokenService)))
 	server.Handle("/event/{event}", authMiddleware(handlers.GetEvent(connection)))
 	server.Handle("/events", authMiddleware(handlers.GetEvents(connection, tokenService)))
 }

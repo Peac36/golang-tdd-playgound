@@ -7,12 +7,15 @@ import (
 	"site/database"
 	"site/database/models"
 	"site/http/handlers"
+	"site/http/middlewares"
+	"site/security"
 	"strconv"
 	"strings"
 	"testing"
 )
 
 func TestCreateEvent(t *testing.T) {
+	tokenService := security.NewTokenService()
 	t.Run("it_allows_only_post_method", func(t *testing.T) {
 		connection, err := database.NewTestDatabaseConnection()
 		if err != nil {
@@ -26,7 +29,7 @@ func TestCreateEvent(t *testing.T) {
 		}
 		rw := httptest.NewRecorder()
 
-		handlers.EventCreate(connection).ServeHTTP(rw, r)
+		handlers.EventCreate(connection, tokenService).ServeHTTP(rw, r)
 
 		if rw.Code != http.StatusMethodNotAllowed {
 			t.Error("Incorrect method")
@@ -52,7 +55,7 @@ func TestCreateEvent(t *testing.T) {
 		}
 		rw := httptest.NewRecorder()
 
-		handlers.EventCreate(connection).ServeHTTP(rw, r)
+		handlers.EventCreate(connection, tokenService).ServeHTTP(rw, r)
 
 		if rw.Code != http.StatusUnprocessableEntity {
 			t.Errorf("Unexpected status code. Expected: %d, Received %d", http.StatusUnprocessableEntity, rw.Code)
@@ -66,6 +69,20 @@ func TestCreateEvent(t *testing.T) {
 		}
 		database.RunMigrations(connection)
 
+		user := models.User{
+			Email:    "example@example.com",
+			Password: "123456789",
+		}
+
+		result := connection.Save(&user)
+		if result.Error != nil {
+			t.Errorf("Failing to create a user: %s", err)
+		}
+
+		token, err := tokenService.CreateToken(&user)
+		if err != nil {
+			t.Errorf("Can not create a token: %s", err)
+		}
 		event := models.Event{
 			Name: "TestEvent123456",
 		}
@@ -78,16 +95,17 @@ func TestCreateEvent(t *testing.T) {
 		if err != nil {
 			t.Error("Can not create a request")
 		}
+		r.Header.Set(middlewares.AuthorizationHeader, token)
 		rw := httptest.NewRecorder()
 
 		storedEvent := models.Event{}
-		result := connection.Find(&storedEvent, "Name=?", event.Name)
+		result = connection.Find(&storedEvent, "Name=?", event.Name)
 
 		if result.RowsAffected != 0 {
 			t.Errorf("There is events with that name %s", event.Name)
 		}
 
-		handlers.EventCreate(connection).ServeHTTP(rw, r)
+		handlers.EventCreate(connection, tokenService).ServeHTTP(rw, r)
 
 		storedEvent = models.Event{}
 		result = connection.Find(&storedEvent, "Name=?", event.Name)
