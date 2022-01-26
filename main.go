@@ -26,6 +26,9 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	defer database.CloseDatabaseConnection(connection)
+
 	if err := database.RunMigrations(connection); err != nil {
 		log.Fatalf("Error running migrations %s \n", err)
 	}

@@ -23,6 +23,15 @@ func NewTestDatabaseConnection() (*gorm.DB, error) {
 	return gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 }
 
+func CloseDatabaseConnection(connection *gorm.DB) {
+	dbInstance, err := connection.DB()
+	if err != nil {
+		fmt.Printf("Error closing the database %v \n", err)
+	}
+	dbInstance.Close()
+	fmt.Println("The database connection has been closed")
+}
+
 func RunMigrations(connection *gorm.DB) error {
 	connection.AutoMigrate(&models.Event{})
 	connection.AutoMigrate(&models.User{})
