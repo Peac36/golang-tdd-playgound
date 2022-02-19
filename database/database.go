@@ -35,5 +35,6 @@ func CloseDatabaseConnection(connection *gorm.DB) {
 func RunMigrations(connection *gorm.DB) error {
 	connection.AutoMigrate(&models.Event{})
 	connection.AutoMigrate(&models.User{})
+	connection.AutoMigrate(&models.Media{})
 	return nil
 }

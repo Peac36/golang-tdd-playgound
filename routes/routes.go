@@ -6,6 +6,7 @@ import (
 	"site/http/handlers/auth"
 	"site/http/middlewares"
 	"site/security"
+	"site/uploader"
 
 	"github.com/gorilla/mux"
 )
@@ -13,6 +14,7 @@ import (
 func NewRouteRegister(server *mux.Router) {
 	connection, _ := database.NewDatabaseConnection()
 	tokenService := security.NewTokenService()
+	uploadService := uploader.NewLocalUploader()
 
 	authMiddleware := middlewares.AuthMiddleware(tokenService)
 
@@ -22,4 +24,6 @@ func NewRouteRegister(server *mux.Router) {
 	server.Handle("/event", authMiddleware(handlers.EventCreate(connection, tokenService)))
 	server.Handle("/event/{event}", authMiddleware(handlers.GetEvent(connection)))
 	server.Handle("/events", authMiddleware(handlers.GetEvents(connection, tokenService)))
+
+	server.Handle("/event/{event}/upload", handlers.CreateMedia(connection, tokenService, uploadService))
 }
