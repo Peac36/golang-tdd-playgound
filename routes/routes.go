@@ -25,5 +25,5 @@ func NewRouteRegister(server *mux.Router) {
 	server.Handle("/event/{event}", authMiddleware(handlers.GetEvent(connection)))
 	server.Handle("/events", authMiddleware(handlers.GetEvents(connection, tokenService)))
 
-	server.Handle("/event/{event}/upload", handlers.CreateMedia(connection, tokenService, uploadService))
+	server.Handle("/event/{event}/upload", authMiddleware(handlers.CreateMedia(connection, tokenService, uploadService)))
 }
